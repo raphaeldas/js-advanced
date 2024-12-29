@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geolocation</title>
+    <style>
+    </style>
+</head>
+
+<body>
+    <button onclick="getPosition()">Get Position</button>
+    <script>
+        console.log('Hello World!');
+
+        function getPosition() {
+            navigator.geolocation.getCurrentPosition(position => {
+                console.log(position);
+                document.body.innerHTML += `<p>${position.coords.altitude}</p>`;
+            }, error => {
+                console.error('error:', error);
+            }, { enableHighAccuracy: true });
+        }
+    </script>
+</body>
+
+</html>

@@ -4,13 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <style>
-        #webcam {
-            border-radius: 50%;
-            float: right;
-        }
-    </style>
+    <title>API</title>
 </head>
 
 <body>
@@ -25,17 +19,15 @@
     <div id="suggestions"></div>
     <video id="webcam"></video>
     <script type="module">
-        import { fetchFromGeoAdmin } from './js/api.js'
+        import { fetchFromGeoAdmin } from '../js/api.js'
         console.log('Hello World!');
 
         let type = 'locations';
         let searchText = '';
         const suggestions = document.querySelector('#suggestions');
 
-        const webCamEnabled = false;
-
         async function makeAPIRequest() {
-            const response = await fetchFromGeoAdmin('SearchServer', `?type=${type}&searchText=${searchText}&limit=10`);
+            const response = await fetchFromGeoAdmin('SearchServer', `?type=${type}&searchText=${searchText}&limit=15`);
             console.log(response);
             if (response.results) {
                 let string = '';
@@ -54,19 +46,6 @@
             if (event.target.name === 'type') type = event.target.value;
             if (event.target.name === 'searchText') searchText = event.target.value;
             makeAPIRequest();
-        }
-
-        if (webCamEnabled) {
-            const videoElem = document.querySelector('video');
-            videoElem.srcObject = await navigator.mediaDevices.getUserMedia({
-                video: {
-                    width: 720,
-                    height: 720
-                }
-            });
-            videoElem.onloadedmetadata = () => {
-                videoElem.play();
-            }
         }
 
         const textInput = document.querySelector('form[name=search]');
