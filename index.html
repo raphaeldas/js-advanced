@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        #webcam {
+            border-radius: 50%;
+            float: right;
+        }
+    </style>
+</head>
+
+<body>
+    <form name="search">
+        <label for="type">Locations</label>
+        <input type="radio" name="type" value="locations" />
+        <label for="type">Layers</label>
+        <input type="radio" name="type" value="layers" /><br>
+        <input type="text" name="searchText" />
+        <button type="submit">Search</button>
+    </form>
+    <div id="suggestions"></div>
+    <video id="webcam"></video>
+    <script type="module">
+        import { fetchFromGeoAdmin } from './js/api.js'
+        console.log('Hello World!');
+
+        let type = 'locations';
+        let searchText = '';
+        const suggestions = document.querySelector('#suggestions');
+
+        const webCamEnabled = false;
+
+        async function makeAPIRequest() {
+            const response = await fetchFromGeoAdmin('SearchServer', `?type=${type}&searchText=${searchText}&limit=10`);
+            console.log(response);
+            if (response.results) {
+                let string = '';
+                for (const result of response.results) {
+                    console.log(result.attrs.detail);
+                    string += result.attrs.label + '<br>';
+                }
+                suggestions.innerHTML = string;
+            } else {
+                console.error('Something is wrong:', response.error.message);
+            }
+        }
+
+        function updateAPIRequest(event) {
+            console.log(event);
+            if (event.target.name === 'type') type = event.target.value;
+            if (event.target.name === 'searchText') searchText = event.target.value;
+            makeAPIRequest();
+        }
+
+        if (webCamEnabled) {
+            const videoElem = document.querySelector('video');
+            videoElem.srcObject = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    width: 720,
+                    height: 720
+                }
+            });
+            videoElem.onloadedmetadata = () => {
+                videoElem.play();
+            }
+        }
+
+        const textInput = document.querySelector('form[name=search]');
+        textInput.addEventListener('input', updateAPIRequest);
+
+        fetchFromGeoAdmin('SearchServer', '?type=locations&searchText=stalden');
+        fetchFromGeoAdmin('MapServer', '/ch.bakom.standorte-mobilfunkanlagen?lang=de');
+        // fetchFromGeoAdmin('MapServer', '/ch.bakom.standorte-mobilfunkanlagen?searchFields=name&text=Zürich&sr=21781&f=json');
+    </script>
+</body>
+
+</html>
