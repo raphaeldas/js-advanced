@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webcam + ML5</title>
+    <style>
+        #webcam {
+            position: absolute;
+            width: 200px;
+            right: 1em;
+        }
+
+        #pointer {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background-color: red;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+
+<body>
+    <video id="webcam"></video>
+    <label for="movePointer">Move Pointer</label>
+    <input type="checkbox" name="movePointer" />
+    <div id="pointer"></div>
+    <script src="https://unpkg.com/ml5@1/dist/ml5.js"></script>
+    <script type="module">
+        console.log('Hello World!');
+        const videoElem = document.querySelector('video');
+        const pointerElem = document.querySelector('#pointer');
+        let controlMouse = false;
+        let smoothPointer = [{ x: 0, y: 0 }, { x: 0, y: 0 }, { x: 0, y: 0 }];
+        let smoothPointerIndex = 0;
+
+        const handPose = ml5.handPose({
+            runtime: 'mediapipe',
+            flipped: true
+        });
+
+        function moveMouse(indexTip) {
+            const smoothLength = smoothPointer.length;
+
+            const xPercent = indexTip.x / videoElem.videoWidth;
+            const yPercent = indexTip.y / videoElem.videoHeight;
+
+            smoothPointer[smoothPointerIndex] = { x: xPercent, y: yPercent };
+            smoothPointerIndex = (smoothPointerIndex + 1) % smoothLength;
+
+            const xNew = smoothPointer.reduce((acc, val) => acc + val.x, 0) / smoothLength;
+            const yNew = smoothPointer.reduce((acc, val) => acc + val.y, 0) / smoothLength;
+
+            pointerElem.style.left = `${window.innerWidth * xNew}px`;
+            pointerElem.style.top = `${window.innerHeight * yNew}px`;
+
+            console.log(indexTip, xPercent, yPercent);
+        }
+
+        function gotHands(results, error) {
+            if (error) console.error(error);
+            console.log(results);
+            if (results.length === 0) return;
+            if (controlMouse) {
+                const indexTip = results[0].index_finger_tip;
+                moveMouse(indexTip);
+            }
+        }
+
+        function changeMoveMouse(event) {
+            controlMouse = event.target.checked;
+        }
+
+        document.querySelector('input[name="movePointer"]').addEventListener('change', changeMoveMouse);
+
+        const stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+                width: 1280,
+                height: 720
+            }
+        });
+        videoElem.srcObject = stream;
+        videoElem.onloadedmetadata = () => {
+            videoElem.play();
+        }
+
+        console.log(handPose, videoElem)
+        await handPose.detectStart(videoElem, gotHands);
+        // setTimeout(() => handPose.detectStop(), 5000); 
+
+    </script>
+</body>
+
+</html>
