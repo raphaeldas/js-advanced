@@ -24,7 +24,7 @@
 
 <body>
     <video id="webcam"></video>
-    <label for="movePointer">Move Pointer</label>
+    <label for="movePointer">Move Pointer by index finger</label>
     <input type="checkbox" name="movePointer" />
     <div id="pointer"></div>
     <script src="https://unpkg.com/ml5@1/dist/ml5.js"></script>
@@ -81,15 +81,14 @@
                 height: 720
             }
         });
+
         videoElem.srcObject = stream;
         videoElem.onloadedmetadata = () => {
             videoElem.play();
         }
 
-        console.log(handPose, videoElem)
-        await handPose.detectStart(videoElem, gotHands);
-        // setTimeout(() => handPose.detectStop(), 5000); 
-
+        console.log(handPose, videoElem);
+        handPose.detectStart(videoElem, gotHands);
     </script>
 </body>
 
