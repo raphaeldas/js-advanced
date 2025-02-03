@@ -49,6 +49,7 @@
                 L.circle([position.coords.latitude, position.coords.longitude], {
                     radius: 2000,
                 }).addTo(map);
+                map.setView(L.latLng(position.coords.latitude, position.coords.longitude), 11);
                 logs.textContent += `Location ${position.coords.latitude} lat, ${position.coords.longitude} long\n`;
                 logs.scrollTop = logs.scrollHeight;
             }, error => {
