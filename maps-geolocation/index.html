@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <style>
+        #map {
+            height: 500px;
+        }
+
+        button, textarea {
+            margin: 1em;
+        }
+
+        textarea[name="coords"] {
+            width: 80vw;
+            height: 200px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="map"></div>
+    <button id="locate">Locate me</button>
+    <button id="track">Track me</button>
+    <button id="store">Store Path</button>
+    Load Path: <select name="storedPaths" id="storedPaths">
+        <option value="">Select Path</option>
+        </select>
+    <br>
+    <textarea name="coords" id="coords"></textarea>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script>
+        const map = new L.Map('map', {
+            crs: L.CRS.EPSG3857,
+            continuousWorld: true,
+            worldCopyJump: false
+        });
+        const url = 'https://wmts20.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-farbe/default/current/3857/{z}/{x}/{y}.jpeg';
+        const tilelayer = new L.tileLayer(url);
+        map.addLayer(tilelayer);
+        map.setView(L.latLng(46.57591, 7.84956), 8);
+
+        const logs = document.querySelector('textarea[name="coords"]');
+
+        const locateButton = document.querySelector('#locate');
+        locateButton.addEventListener('click', () => {
+            navigator.geolocation.getCurrentPosition(position => {
+                console.log(position);
+                logs.textContent += `Location: ${position.coords.latitude} lat, ${position.coords.longitude} long\n`;
+                logs.scrollTop = logs.scrollHeight;
+                map.setView(L.latLng(position.coords.latitude, position.coords.longitude), 12);
+                L.circle([position.coords.latitude, position.coords.longitude], {radius: 2000}).addTo(map);
+            });
+        });
+
+        let tracker;
+        const path = [];
+        const trackLine = L.polyline([], { color: 'red', weight: 5, opacity: 0.5 }).addTo(map);
+        const trackButton = document.querySelector('#track');
+        trackButton.addEventListener('click', () => {
+            if (trackButton.textContent === 'Track me') {
+                trackButton.textContent = 'Stop tracking';
+                tracker = navigator.geolocation.watchPosition(position => {
+                    console.log(position);
+                    trackLine.addLatLng([position.coords.latitude, position.coords.longitude]);
+                    logs.textContent += `Track Location ${position.coords.latitude} lat, ${position.coords.longitude} long\n`;
+                    path.push([position.coords.latitude, position.coords.longitude]);
+                    logs.scrollTop = logs.scrollHeight;
+                }, error => {
+                    console.error('error:', error);
+                }, { enableHighAccuracy: true });
+            } else {
+                trackButton.textContent = 'Track me';
+                navigator.geolocation.clearWatch(tracker);
+                path = [];
+            }
+        });
+
+        const storeButton = document.querySelector('#store');
+        storeButton.addEventListener('click', () => {
+            console.log(path);
+            const name = window.prompt('With which name should your Path be saved?');
+            localStorage.setItem(name, JSON.stringify(path));
+            logs.textContent += `Path "${name}" saved. ${path.length} Entries\n`;
+        });
+
+        for(let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            const option = document.createElement('option');
+            option.value = key;
+            option.textContent = key;
+            console.log(key, option);
+            document.querySelector('#storedPaths').appendChild(option);
+        }
+
+        document.querySelector('#storedPaths').addEventListener('change', (event) => {
+            const item = event.target.value;
+            if (!item) return;
+            const path = JSON.parse(localStorage.getItem(item));
+            console.log(path);
+            trackLine.setLatLngs(path);
+            map.fitBounds(trackLine.getBounds());
+        });
+
+    </script>
+</body>
+
+</html>
