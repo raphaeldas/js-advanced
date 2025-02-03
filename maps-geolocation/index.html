@@ -61,6 +61,7 @@
         });
 
         let tracker;
+        let lastPosition;
         const path = [];
         const trackLine = L.polyline([], { color: 'red', weight: 5, opacity: 0.5 }).addTo(map);
         const trackButton = document.querySelector('#track');
@@ -68,8 +69,23 @@
             if (trackButton.textContent === 'Track me') {
                 trackButton.textContent = 'Stop tracking';
                 tracker = navigator.geolocation.watchPosition(position => {
+                    const timestamp = new Date().getTime();
                     console.log(position);
                     trackLine.addLatLng([position.coords.latitude, position.coords.longitude]);
+
+                    if (lastPosition) {
+                        const distance = L.latLng(lastPosition.coords.latitude, lastPosition.coords.longitude).distanceTo(L.latLng(position.coords.latitude, position.coords.longitude));
+                        const time = (timestamp - lastPosition.timestamp) / 1000;
+                        const velocity = distance / time;
+                        logs.textContent += `Distance: ${distance.toFixed(2)} m, Time diff: ${time.toFixed(3)} s, Velocity: ${velocity.toFixed(2)} m/s\n`;
+                    }
+
+                    lastPosition = {
+                        coords: position.coords,
+                        timestamp
+                    }
+                    console.log(lastPosition);
+
                     logs.textContent += `Track Location ${position.coords.latitude} lat, ${position.coords.longitude} long\n`;
                     path.push([position.coords.latitude, position.coords.longitude]);
                     logs.scrollTop = logs.scrollHeight;
@@ -79,7 +95,7 @@
             } else {
                 trackButton.textContent = 'Track me';
                 navigator.geolocation.clearWatch(tracker);
-                path = [];
+                path.length = 0;
             }
         });
 
