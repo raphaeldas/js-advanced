@@ -6,10 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Canvas Painting</title>
     <style>
+        html, body {
+            margin: 0;
+        }
+
         #webcam {
-            position: absolute;
-            width: 200px;
-            right: 1em;
+            width: 100%;
         }
 
         #canvas {
@@ -20,17 +22,35 @@
             height: 100vh;
             background-color: transparent;
         }
+
+        #container {
+            display: flex;
+            justify-content: space-between;
+            width: calc(100% - 2em);
+            padding: 1em;
+        }
     </style>
 </head>
 
 <body>
     <video id="webcam"></video>
-    <canvas id="canvas"></canvas>
+    <div id="container">
+        <div class="left">
+            <h2>Player 1</h2>
+            <p id="player1"></p>
+        </div>
+        <div class="right">
+            <h2>Player 2</h2>
+            <p id="player2"></p>
+        </div>
+    </div>
     <script src="https://unpkg.com/ml5@1/dist/ml5.js"></script>
     <script type="module">
         console.log('Hello World!');
-        let stream;
+        let stream, videoWidth;
         const videoElem = document.querySelector('video');
+        const player1 = document.querySelector('#player1');
+        const player2 = document.querySelector('#player2');
 
         const handPose = ml5.handPose({
             runtime: 'mediapipe',
@@ -39,7 +59,6 @@
 
         function gotHands(results, error) {
             if (error) console.error(error);
-            // console.log(results);
             if (results.length === 0) return;
             // console.log(results);
 
@@ -74,6 +93,15 @@
                 }
 
                 console.log(tipLonger);
+
+                const player = (hand.wrist.x > videoWidth / 2) ? player1 : player2;
+                if (tipLonger < 2) {
+                    player.textContent = 'Stone';
+                } else if (tipLonger > 2) {
+                    player.textContent = 'Paper';
+                } else {
+                    player.textContent = 'Scissor';
+                }
             }
         }
 
@@ -88,6 +116,7 @@
             videoElem.srcObject = stream;
             videoElem.onloadedmetadata = () => {
                 videoElem.play();
+                videoWidth = videoElem.videoWidth;
             }
 
             console.log(handPose, videoElem);
