@@ -62,18 +62,18 @@
 
                 for (const finger of fingers) {
                     const tip = hand[`${finger}_finger_tip`];
-                    const mcp = hand[`${finger}_finger_mcp`];
+                    const pip = hand[`${finger}_finger_pip`];
 
                     const x2 = tip.x;
                     const y2 = tip.y;
                     const distanceTipWrist = Math.hypot(x2 - x1, y2 - y1);
 
-                    const x3 = mcp.x;
-                    const y3 = mcp.y;
-                    const distanceMcpWrist = Math.hypot(x3 - x1, y3 - y1);
+                    const x3 = pip.x;
+                    const y3 = pip.y;
+                    const distancePipWrist = Math.hypot(x3 - x1, y3 - y1);
 
-                    // console.log(distanceTipWrist.toFixed(2), distanceMcpWrist.toFixed(2));
-                    if (distanceTipWrist > distanceMcpWrist) {
+                    // console.log(distanceTipWrist.toFixed(2), distancePipWrist.toFixed(2));
+                    if (distanceTipWrist > distancePipWrist) {
                         tipLonger++;
                     }
                 }
