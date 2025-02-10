@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canvas Painting</title>
+    <style>
+        #webcam {
+            position: absolute;
+            width: 200px;
+            right: 1em;
+        }
+
+        #canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: transparent;
+        }
+    </style>
+</head>
+
+<body>
+    <video id="webcam"></video>
+    <canvas id="canvas"></canvas>
+    <script src="https://unpkg.com/ml5@1/dist/ml5.js"></script>
+    <script type="module">
+        console.log('Hello World!');
+        let stream;
+        const videoElem = document.querySelector('video');
+
+        let smoothPointer = [{ x: 0, y: 0 }, { x: 0, y: 0 }, { x: 0, y: 0 }];
+        let smoothPointerIndex = 0;
+
+        const handPose = ml5.handPose({
+            runtime: 'mediapipe',
+            flipped: true
+        });
+
+        function gotHands(results, error) {
+            if (error) console.error(error);
+            // console.log(results);
+            if (results.length === 0) return;
+            // console.log(results);
+
+            // distances tips to wrist:
+            // if distance tip <-> wrist is shorter than MCP <-> wrist 4 times -> stone
+            // if distance tip <-> wrist is shorter than MCP <-> wrist 2 times -> scissor
+            // if distance tip <-> wrist is longer than MCP <-> wrist 4 times -> paper
+
+            for (const hand of results) {
+                if (hand.confidence < 0.8) return;
+                const wristPos = hand.wrist;
+                const fingers = ['index', 'middle', 'ring', 'pinky'];
+                const x1 = wristPos.x;
+                const y1 = wristPos.y;
+
+                let tipLonger = 0;
+
+                for (const finger of fingers) {
+                    const tip = hand[`${finger}_finger_tip`];
+                    const mcp = hand[`${finger}_finger_mcp`];
+
+                    const x2 = tip.x;
+                    const y2 = tip.y;
+                    const distanceTipWrist = Math.hypot(x2 - x1, y2 - y1);
+
+                    const x3 = mcp.x;
+                    const y3 = mcp.y;
+                    const distanceMcpWrist = Math.hypot(x3 - x1, y3 - y1);
+
+                    // console.log(distanceTipWrist.toFixed(2), distanceMcpWrist.toFixed(2));
+                    if (distanceTipWrist > distanceMcpWrist) {
+                        tipLonger++;
+                    }
+                }
+
+                console.log(tipLonger);
+            }
+
+        }
+
+        async function startWebcam() {
+            stream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    width: 1280,
+                    height: 720
+                }
+            });
+
+            videoElem.srcObject = stream;
+            videoElem.onloadedmetadata = () => {
+                videoElem.play();
+            }
+
+            console.log(handPose, videoElem);
+            handPose.detectStart(videoElem, gotHands);
+        }
+
+        if (!document.hidden) startWebcam();
+
+        document.addEventListener("visibilitychange", async () => {
+            if (document.hidden) {
+                console.log('window blurred');
+                handPose.detectStop();
+                videoElem.pause();
+                stream.getTracks().forEach(track => {
+                    track.stop();
+                });
+            } else {
+                console.log('window focused');
+                startWebcam();
+            }
+        });
+    </script>
+</body>
+
+</html>
