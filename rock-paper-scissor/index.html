@@ -32,9 +32,6 @@
         let stream;
         const videoElem = document.querySelector('video');
 
-        let smoothPointer = [{ x: 0, y: 0 }, { x: 0, y: 0 }, { x: 0, y: 0 }];
-        let smoothPointerIndex = 0;
-
         const handPose = ml5.handPose({
             runtime: 'mediapipe',
             flipped: true
@@ -53,10 +50,9 @@
 
             for (const hand of results) {
                 if (hand.confidence < 0.8) return;
-                const wristPos = hand.wrist;
                 const fingers = ['index', 'middle', 'ring', 'pinky'];
-                const x1 = wristPos.x;
-                const y1 = wristPos.y;
+                const x1 = hand.wrist.x;
+                const y1 = hand.wrist.y;
 
                 let tipLonger = 0;
 
@@ -72,7 +68,6 @@
                     const y3 = pip.y;
                     const distancePipWrist = Math.hypot(x3 - x1, y3 - y1);
 
-                    // console.log(distanceTipWrist.toFixed(2), distancePipWrist.toFixed(2));
                     if (distanceTipWrist > distancePipWrist) {
                         tipLonger++;
                     }
@@ -80,7 +75,6 @@
 
                 console.log(tipLonger);
             }
-
         }
 
         async function startWebcam() {
