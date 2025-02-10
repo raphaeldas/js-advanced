@@ -25,7 +25,7 @@
 
         #container {
             display: flex;
-            justify-content: space-between;
+            justify-content: space-around;
             width: calc(100% - 2em);
             padding: 1em;
         }
@@ -49,10 +49,24 @@
         console.log('Hello World!');
         let stream, videoWidth;
         const videoElem = document.querySelector('video');
-        const player1 = document.querySelector('#player1');
-        const player2 = document.querySelector('#player2');
+        const player1 = {
+            'moveHand': 'left',
+            'moveElem': document.querySelector('#player1'),
+            'startMoveMaxDistance': null,
+            'startMoveMinDistance': null
+        };
+        const player2 = {
+            'moveHand': 'right',
+            'moveElem': document.querySelector('#player2'),
+            'startMoveMaxDistance': null,
+            'startMoveMinDistance': null
+        };
+
+        let gameStarted = false;
+        let startMoves = 3;
 
         const handPose = ml5.handPose({
+            maxHands: 4,
             runtime: 'mediapipe',
             flipped: true
         });
@@ -92,9 +106,21 @@
                     }
                 }
 
-                console.log(tipLonger);
+                // console.log(tipLonger);
 
-                const player = (hand.wrist.x > videoWidth / 2) ? player1 : player2;
+
+                if (!gameStarted) {
+                    // wait until game is started (rock, paper, scissor, shoot)
+                    
+                    startMoves--;
+                    if (startMoves === 1) {
+                        gameStarted = true;
+                    }
+                } else {
+                    // detect move for 10 intervals and set winner
+                }
+
+                const player = (hand.wrist.x > videoWidth / 2) ? player1.moveElem : player2.moveElem;
                 if (tipLonger < 2) {
                     player.textContent = 'Stone';
                 } else if (tipLonger > 2) {
@@ -123,6 +149,11 @@
             handPose.detectStart(videoElem, gotHands);
         }
 
+        function startGame() {
+            player1.textContent = '';
+            player2.textContent = '';
+        }
+
         if (!document.hidden) startWebcam();
 
         document.addEventListener("visibilitychange", async () => {
@@ -136,6 +167,7 @@
             } else {
                 console.log('window focused');
                 startWebcam();
+                startGame();
             }
         });
     </script>
