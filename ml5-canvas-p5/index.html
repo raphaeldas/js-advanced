@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canvas Painting</title>
+    <style>
+        body {
+            margin: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #webcam {
+            position: absolute;
+            width: 200px;
+            right: 1em;
+            z-index: 100;
+        }
+    </style>
+</head>
+
+<body>
+    <video id="webcam"></video>
+    <script src="https://unpkg.com/ml5@1/dist/ml5.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.11.3/lib/p5.min.js"></script>
+    <script>
+        console.log('Hello World!');
+
+        // variable definition
+        let stream, circleX, circleY;
+        const videoElem = document.querySelector('video');
+
+        let smoothPointer = [{ x: 0, y: 0 }, { x: 0, y: 0 }, { x: 0, y: 0 }];
+        let smoothPointerIndex = 0;
+
+        const handPose = ml5.handPose({
+            runtime: 'mediapipe',
+            flipped: true
+        });
+
+        // functions
+        
+        function setup() {
+            createCanvas(window.innerWidth, window.innerHeight);
+            background(255);
+            noStroke();
+        }
+
+        function draw() {
+            // background(200, 30, 182);
+            fill(255, 0, 0);
+            circle(circleX, circleY, 20);
+            console.log(circleX, circleY);
+        }
+
+        function paint(tip) {
+            const smoothLength = smoothPointer.length;
+
+            const xPercent = tip.x / videoElem.videoWidth;
+            const yPercent = tip.y / videoElem.videoHeight;
+
+            smoothPointer[smoothPointerIndex] = { x: xPercent, y: yPercent };
+            smoothPointerIndex = (smoothPointerIndex + 1) % smoothLength;
+
+            xNew = smoothPointer.reduce((acc, val) => acc + val.x, 0) / smoothLength;
+            yNew = smoothPointer.reduce((acc, val) => acc + val.y, 0) / smoothLength;
+
+            circleX = xNew * window.innerWidth;
+            circleY = yNew * window.innerHeight;
+
+            console.log(tip, xPercent, yPercent);
+        }
+
+        function gotHands(results, error) {
+            if (error) console.error(error);
+            // console.log(results);
+            if (results.length === 0) return;
+            console.log(results);
+
+            for (const hand of results) {
+                const indexPosition = hand.index_finger_tip;
+
+                console.log(`${hand.handedness} hand, index: ${indexPosition.x}, ${indexPosition.y}`);
+                paint(indexPosition);
+            }
+
+        }
+
+        async function startWebcam() {
+            stream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    width: 1280,
+                    height: 720
+                }
+            });
+
+            videoElem.srcObject = stream;
+            videoElem.onloadedmetadata = () => {
+                videoElem.play();
+            }
+
+            console.log(handPose, videoElem);
+            handPose.detectStart(videoElem, gotHands);
+        }
+
+        if (!document.hidden) startWebcam();
+
+        document.addEventListener("visibilitychange", async () => {
+            if (document.hidden) {
+                console.log('window blurred');
+                handPose.detectStop();
+                videoElem.pause();
+                stream.getTracks().forEach(track => {
+                    track.stop();
+                });
+            } else {
+                console.log('window focused');
+                startWebcam();
+            }
+        });
+    </script>
+</body>
+
+</html>
