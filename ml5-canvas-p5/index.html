@@ -30,23 +30,23 @@
         console.log('Hello World!');
 
         // variable definition
-        let stream, circleX, circleY;
+        let handPose, stream, circleX, circleY;
         const videoElem = document.querySelector('video');
 
         let smoothPointer = [{ x: 0, y: 0 }, { x: 0, y: 0 }, { x: 0, y: 0 }];
         let smoothPointerIndex = 0;
 
-        const handPose = ml5.handPose({
-            runtime: 'mediapipe',
-            flipped: true
-        });
-
         // functions
-        
+
         function setup() {
             createCanvas(window.innerWidth, window.innerHeight);
             background(255);
             noStroke();
+
+            handPose = ml5.handPose({
+                runtime: 'mediapipe',
+                flipped: true
+            });
         }
 
         function draw() {
