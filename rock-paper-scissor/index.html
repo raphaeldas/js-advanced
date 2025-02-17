@@ -6,7 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Canvas Painting</title>
     <style>
-        html, body {
+        html,
+        body {
             margin: 0;
         }
 
@@ -14,12 +15,11 @@
             width: 100%;
         }
 
-        #canvas {
+        canvas {
             position: absolute;
             top: 0;
             left: 0;
-            width: 100vw;
-            height: 100vh;
+            width: 100%;
             background-color: transparent;
         }
 
@@ -29,19 +29,35 @@
             width: calc(100% - 2em);
             padding: 1em;
         }
+
+        #container>div {
+            width: 30%;
+        }
+
+        hr {
+            height: 4px;
+            background-color: green;
+        }
     </style>
 </head>
 
 <body>
     <video id="webcam"></video>
+    <button id="startButton">Start</button>
     <div id="container">
         <div class="left">
             <h2>Player 1</h2>
+            <p id="moveHand1"></p>
             <p id="player1"></p>
+            <p id="debugPlayer1"></p>
+            <hr id="wristDistance1">
         </div>
         <div class="right">
             <h2>Player 2</h2>
+            <p id="moveHand2"></p>
             <p id="player2"></p>
+            <p id="debugPlayer2"></p>
+            <hr id="wristDistance2">
         </div>
     </div>
     <script src="https://unpkg.com/ml5@1/dist/ml5.js"></script>
@@ -49,27 +65,57 @@
         console.log('Hello World!');
         let stream, videoWidth;
         const videoElem = document.querySelector('video');
+        const webcam = false;
+        const drawKeypoints = true;
+
         const player1 = {
-            'moveHand': 'left',
+            'moveHand': 'right',
+            'hands': {
+                left: undefined,
+                right: undefined
+            },
             'moveElem': document.querySelector('#player1'),
+            'debug': document.querySelector('#debugPlayer1'),
+            'wristDistance': document.querySelector('#wristDistance1'),
             'startMoveMaxDistance': null,
             'startMoveMinDistance': null
         };
+
         const player2 = {
-            'moveHand': 'right',
+            'moveHand': 'left',
+            'hands': {
+                left: undefined,
+                right: undefined
+            },
             'moveElem': document.querySelector('#player2'),
+            'debug': document.querySelector('#debugPlayer2'),
+            'wristDistance': document.querySelector('#wristDistance2'),
             'startMoveMaxDistance': null,
             'startMoveMinDistance': null
         };
 
         let gameStarted = false;
         let startMoves = 3;
+        let canvas, ctx;
 
         const handPose = ml5.handPose({
             maxHands: 4,
             runtime: 'mediapipe',
-            flipped: true
+            // flipped: true
         });
+
+        if (drawKeypoints) {
+            canvas = document.createElement('canvas');
+            document.body.append(canvas);
+            ctx = canvas.getContext('2d');
+        }
+
+        function displayMoveHand() {
+            document.querySelector('#moveHand1').textContent = `Move Hand: ${player1.moveHand}`;
+            document.querySelector('#moveHand2').textContent = `Move Hand: ${player2.moveHand}`;
+        }
+
+        displayMoveHand();
 
         function gotHands(results, error) {
             if (error) console.error(error);
@@ -80,9 +126,47 @@
             // if distance tip <-> wrist is shorter than MCP <-> wrist 4 times -> stone
             // if distance tip <-> wrist is shorter than MCP <-> wrist 2 times -> scissor
             // if distance tip <-> wrist is longer than MCP <-> wrist 4 times -> paper
+            console.log('detected hands:', results.length);
+            console.log(results);
+
+            if (drawKeypoints) ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             for (const hand of results) {
-                if (hand.confidence < 0.8) return;
+                if (drawKeypoints) {
+                    ctx.fillStyle = hand.handedness === 'Left' ? 'green' : 'blue';
+                    for (const keypoint of hand.keypoints) {
+                        ctx.beginPath();
+                        ctx.arc(keypoint.x, keypoint.y, 6, 0, 2 * Math.PI);
+                        ctx.fill();
+                    }
+                }
+
+                // assign hands to players
+                if (hand.confidence < 0.8) continue;
+                const plyr = (hand.wrist.x > videoWidth / 2) ? player1 : player2;
+                plyr.hands[hand.handedness.toLowerCase()] = hand;
+
+                // console.log(tipLonger);
+
+
+                // if (!gameStarted) {
+                //     // wait until game is started (rock, paper, scissor, shoot)
+
+                //     startMoves--;
+                //     if (startMoves === 1) {
+                //         gameStarted = true;
+                //     }
+
+            }
+            // console.log(player1.hands, player2.hands);
+
+            [player1, player2].forEach(plyr => {
+                const wristLeft = plyr.hands.left?.wrist.y;
+                const wristRight = plyr.hands.right?.wrist.y;
+                plyr.debug.innerHTML = `${wristLeft?.toFixed(0)} ${wristRight?.toFixed(0)}<br/>`;
+
+                const hand = plyr.hands[plyr.moveHand];
+                if (!hand || hand.confidence < 0.8) return;
                 const fingers = ['index', 'middle', 'ring', 'pinky'];
                 const x1 = hand.wrist.x;
                 const y1 = hand.wrist.y;
@@ -106,43 +190,54 @@
                     }
                 }
 
-                // console.log(tipLonger);
-
-
-                if (!gameStarted) {
-                    // wait until game is started (rock, paper, scissor, shoot)
-                    
-                    startMoves--;
-                    if (startMoves === 1) {
-                        gameStarted = true;
-                    }
-                } else {
-                    // detect move for 10 intervals and set winner
-                }
-
-                const player = (hand.wrist.x > videoWidth / 2) ? player1.moveElem : player2.moveElem;
                 if (tipLonger < 2) {
-                    player.textContent = 'Stone';
+                    plyr.moveElem.textContent = 'Stone';
                 } else if (tipLonger > 2) {
-                    player.textContent = 'Paper';
+                    plyr.moveElem.textContent = 'Paper';
                 } else {
-                    player.textContent = 'Scissor';
+                    plyr.moveElem.textContent = 'Scissor';
                 }
-            }
+
+                if (!wristLeft || !wristRight) return;
+                const distance = Math.abs(wristLeft - wristRight);
+                plyr.debug.innerHTML += ` ${distance.toFixed(2)}`;
+                plyr.wristDistance.style.width = `${distance / 2}px`;
+
+            })
+
         }
 
         async function startWebcam() {
-            stream = await navigator.mediaDevices.getUserMedia({
-                video: {
-                    width: 1280,
-                    height: 720
-                }
-            });
+            if (webcam) {
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        width: 1280,
+                        height: 720
+                    }
+                });
+                videoElem.srcObject = stream;
+            } else {
+                videoElem.src = 'recording.mp4';
+                videoElem.loop = true;
+            }
 
-            videoElem.srcObject = stream;
             videoElem.onloadedmetadata = () => {
                 videoElem.play();
                 videoWidth = videoElem.videoWidth;
+
+                if (drawKeypoints) {
+                    canvas.width = videoElem.videoWidth;
+                    canvas.height = videoElem.videoHeight;
+                    ctx.fillStyle = 'red';
+                }
+
+                setInterval(() => {
+                    const p1 = player1.moveHand;
+                    const p2 = player2.moveHand;
+                    player1.moveHand = p2;
+                    player2.moveHand = p1;
+                    displayMoveHand();
+                }, 16000);
             }
 
             console.log(handPose, videoElem);
@@ -154,7 +249,8 @@
             player2.textContent = '';
         }
 
-        if (!document.hidden) startWebcam();
+        // if (!document.hidden) startWebcam();
+        document.querySelector('#startButton').addEventListener('click', startWebcam);
 
         document.addEventListener("visibilitychange", async () => {
             if (document.hidden) {
