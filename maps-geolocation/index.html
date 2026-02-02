@@ -103,7 +103,7 @@
         const storeButton = document.querySelector('#store');
         storeButton.addEventListener('click', () => {
             console.log(path);
-            const name = window.prompt('With which name should your Path be saved?', `Path_${new Date().toLocaleString()}`);
+            const name = window.prompt('Which name should your path be saved under?', `Path_${new Date().toLocaleString()}`);
             localStorage.setItem(name, JSON.stringify(path));
             logs.textContent += `Path "${name}" saved. ${path.length} Entries\n`;
         });
