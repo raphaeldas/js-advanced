@@ -33,9 +33,11 @@
         const map = new L.Map('map', {
             crs: L.CRS.EPSG3857,
             continuousWorld: true,
-            worldCopyJump: false
+            worldCopyJump: false,
+            minZoom: 7.5
         });
-        const url = 'https://wmts20.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-farbe/default/current/3857/{z}/{x}/{y}.jpeg';
+        const url = 'https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.swissimage/default/current/3857/{z}/{x}/{y}.jpeg';
+        // const url = 'https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-farbe/default/current/3857/{z}/{x}/{y}.jpeg';
         const tilelayer = new L.tileLayer(url);
         map.addLayer(tilelayer);
         map.setView(L.latLng(46.57591, 7.84956), 7.5);
