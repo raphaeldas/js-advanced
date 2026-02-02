@@ -42,7 +42,8 @@
             continuousWorld: true,
             worldCopyJump: false
         });
-        const url = 'https://wmts20.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-farbe/default/current/3857/{z}/{x}/{y}.jpeg';
+        // const url = 'https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-farbe/default/current/3857/{z}/{x}/{y}.jpeg';
+        const url = 'https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.swissimage/default/current/3857/{z}/{x}/{y}.jpeg';
         const tilelayer = new L.tileLayer(url);
         map.addLayer(tilelayer);
         map.setView(L.latLng(46.57591, 7.84956), 8);
@@ -55,8 +56,8 @@
                 console.log(position);
                 logs.textContent += `Location: ${position.coords.latitude} lat, ${position.coords.longitude} long\n`;
                 logs.scrollTop = logs.scrollHeight;
-                map.setView(L.latLng(position.coords.latitude, position.coords.longitude), 12);
-                L.circle([position.coords.latitude, position.coords.longitude], {radius: 2000}).addTo(map);
+                map.setView(L.latLng(position.coords.latitude, position.coords.longitude), 13);
+                L.circle([position.coords.latitude, position.coords.longitude], {radius: 1000}).addTo(map);
             });
         });
 
