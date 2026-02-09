@@ -36,7 +36,7 @@
         let smoothPointer = [{ x: 0, y: 0 }, { x: 0, y: 0 }, { x: 0, y: 0 }];
         let smoothPointerIndex = 0;
 
-        const handPose = ml5.handPose({
+        const handPose = await ml5.handPose({
             runtime: 'mediapipe',
             flipped: true
         });
