@@ -129,6 +129,7 @@
         });
 
         let wakeLock = await navigator.wakeLock.request("screen");
+        log.textContent += `Wake Lock acquired\n`;
         document.addEventListener("visibilitychange", async () => {
             if (wakeLock !== null && document.visibilityState === "visible") {
                 wakeLock = await navigator.wakeLock.request("screen");
