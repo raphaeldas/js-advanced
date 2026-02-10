@@ -74,6 +74,7 @@
                     const timestamp = new Date().getTime();
                     console.log(position);
                     trackLine.addLatLng([position.coords.latitude, position.coords.longitude]);
+                    map.panTo(L.latLng(position.coords.latitude, position.coords.longitude));
 
                     if (lastPosition) {
                         const distance = L.latLng(lastPosition.coords.latitude, lastPosition.coords.longitude).distanceTo(L.latLng(position.coords.latitude, position.coords.longitude));
