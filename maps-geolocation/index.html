@@ -12,7 +12,8 @@
             height: 500px;
         }
 
-        button, textarea {
+        button,
+        textarea {
             margin: 1em;
         }
 
@@ -30,7 +31,7 @@
     <button id="store">Store Path</button><br>
     Load Path: <select name="storedPaths" id="storedPaths">
         <option value="">Select Path</option>
-        </select>
+    </select>
     <br>
     <textarea name="coords" id="coords"></textarea>
 
@@ -57,7 +58,7 @@
                 logs.textContent += `Location: ${position.coords.latitude} lat, ${position.coords.longitude} long\n`;
                 logs.scrollTop = logs.scrollHeight;
                 map.setView(L.latLng(position.coords.latitude, position.coords.longitude), 13);
-                L.circle([position.coords.latitude, position.coords.longitude], {radius: 1000}).addTo(map);
+                L.circle([position.coords.latitude, position.coords.longitude], { radius: 1000 }).addTo(map);
             });
         });
 
@@ -108,7 +109,7 @@
             logs.textContent += `Path "${name}" saved. ${path.length} Entries\n`;
         });
 
-        for(let i = 0; i < localStorage.length; i++) {
+        for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
             const option = document.createElement('option');
             option.value = key;
@@ -124,6 +125,15 @@
             console.log(path);
             trackLine.setLatLngs(path);
             map.fitBounds(trackLine.getBounds());
+        });
+
+        let wakeLock = null;
+        document.addEventListener("visibilitychange", async () => {
+            if (wakeLock !== null && document.visibilityState === "visible") {
+                wakeLock = await navigator.wakeLock.request("screen");
+                console.log('Wake Lock re-acquired', wakeLock);
+                logs.textContent += `Wake Lock re-acquired\n`;
+            }
         });
 
     </script>
